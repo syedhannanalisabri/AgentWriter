@@ -1,23 +1,16 @@
-import os
 import streamlit as st
-from dotenv import load_dotenv
 from crewai import Agent, Task, Crew
 from langchain.llms import HuggingFaceHub
 
-# ✅ Force CrewAI to use LangChain, not LiteLLM
-os.environ["CREWAI_LLM_PROVIDER"] = "langchain"
+# Initialize HuggingFace LLM with token from Streamlit Secrets
+hf_token = st.secrets["HUGGINGFACEHUB_API_TOKEN"]
 
-# ✅ Load environment variables
-load_dotenv()
-
-# ✅ Initialize HuggingFace LLM (free models)
 llm = HuggingFaceHub(
-    repo_id="google/flan-t5-large",  # You can also try: tiiuae/falcon-7b-instruct
-    huggingfacehub_api_token=os.getenv("HUGGINGFACEHUB_API_TOKEN"),
+    repo_id="google/flan-t5-large",  # or any other model
+    huggingfacehub_api_token=hf_token,
     model_kwargs={"temperature": 0.5, "max_new_tokens": 512}
 )
 
-# ✅ Create agents
 def create_agents():
     planner = Agent(
         role="Content Planner",
@@ -45,7 +38,6 @@ def create_agents():
     )
     return planner, writer, editor
 
-# ✅ Create tasks
 def create_tasks(planner, writer, editor):
     plan = Task(
         description="Create a detailed content outline for {topic} including intro, key points, audience, and SEO keywords.",
@@ -64,7 +56,6 @@ def create_tasks(planner, writer, editor):
     )
     return [plan, write, edit]
 
-# ✅ Streamlit UI
 st.set_page_config(page_title="🧠 Free AI Blog Generator", layout="centered")
 st.title("🧠 AI Blog Generator (Free with Hugging Face)")
 
@@ -87,4 +78,3 @@ if st.button("Generate Blog"):
             st.download_button("💾 Download as Markdown", result, file_name="blog.md")
         except Exception as e:
             st.error(f"❌ Error: {e}")
-
